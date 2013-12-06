@@ -62,6 +62,9 @@ Debug
 Release
 ipch
 
+build*/
+project*/
+
 # sphinx generated files
 /docs/build/
 
