@@ -96,7 +96,7 @@ else()
   )
 endif()
 
-add_library(${TARGET_NAME} STATIC ${SOURCE_FILES})
+add_library(${TARGET_NAME} ${SOURCE_FILES})
 
 if(WIN32)
   target_link_libraries(${TARGET_NAME} ws2_32.lib)
