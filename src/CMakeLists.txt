@@ -1,22 +1,24 @@
 cmake_minimum_required(VERSION 2.8)
 
-if(NOT WIN32)
-  add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D__USE_FILE_OFFSET64)
-  add_definitions(-D_GNU_SOURCE)
-else()
+add_definitions(-DHAVE_CONFIG_H)
+
+if(BUILD_SHARED_LIBS)
+  add_definitions(-DBUILDING_UV_SHARED)
+endif()
+
+if(WIN32)
   add_definitions(-D_WIN32_WINNT=0x0600)
   add_definitions(-D_GNU_SOURCE)
 endif()
 
 if(APPLE)
-  add_definitions(_DARWIN_USE_64_BIT_INODE=1)
+  add_definitions(-D_DARWIN_USE_64_BIT_INODE=1)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   add_definitions(-D_POSIX_C_SOURCE=200112)
 endif()
 
-add_definitions(-DHAVE_CONFIG_H)
 
 set(SOURCE_FILES
     ../include/uv.h
