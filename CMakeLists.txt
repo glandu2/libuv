@@ -8,7 +8,8 @@ if(NOT WIN32)
   add_definitions(-D_GNU_SOURCE)
 endif()
 
-include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
-include_directories(${CMAKE_CURRENT_LIST_DIR}/src)
+add_definitions(-DBUILDING_UV_SHARED)
+include_directories("${CMAKE_CURRENT_LIST_DIR}/include")
+include_directories("${CMAKE_CURRENT_LIST_DIR}/src")
 
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src src)
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/src" src)
