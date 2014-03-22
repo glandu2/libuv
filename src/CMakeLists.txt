@@ -24,12 +24,14 @@ set(SOURCE_FILES
     ../include/uv.h
     ../include/tree.h
     ../include/uv-errno.h
+    ../include/uv-version.h
     fs-poll.c
     inet.c
     queue.h
     uv-common.c
     uv-common.h
     version.c
+    heap-inl.h
 )
 
 if(WIN32)
