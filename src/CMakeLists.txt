@@ -25,6 +25,7 @@ set(SOURCE_FILES
     ../include/tree.h
     ../include/uv-errno.h
     ../include/uv-version.h
+    ../include/uv-threadpool.h
     fs-poll.c
     inet.c
     queue.h
@@ -32,6 +33,7 @@ set(SOURCE_FILES
     uv-common.h
     version.c
     heap-inl.h
+    threadpool.c
 )
 
 if(WIN32)
@@ -44,6 +46,7 @@ if(WIN32)
       win/fs.c
       win/fs-event.c
       win/getaddrinfo.c
+      win/getnameinfo.c
       win/handle.c
       win/handle-inl.h
       win/internal.h
@@ -59,7 +62,6 @@ if(WIN32)
       win/stream-inl.h
       win/tcp.c
       win/thread.c
-      win/threadpool.c
       win/timer.c
       win/tty.c
       win/udp.c
@@ -77,6 +79,7 @@ else()
       unix/dl.c
       unix/fs.c
       unix/getaddrinfo.c
+      unix/getnameinfo.c
       unix/internal.h
       unix/linux-core.c
       unix/linux-inotify.c
@@ -93,7 +96,6 @@ else()
       unix/stream.c
       unix/tcp.c
       unix/thread.c
-      unix/threadpool.c
       unix/timer.c
       unix/tty.c
       unix/udp.c
