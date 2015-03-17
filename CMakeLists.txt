@@ -8,6 +8,7 @@ if(NOT WIN32)
   add_definitions(-D_GNU_SOURCE)
 endif()
 
+set(UV_INCLUDE "${CMAKE_CURRENT_LIST_DIR}/include" CACHE STRING "libuv include directory")
 include_directories("${CMAKE_CURRENT_LIST_DIR}/include")
 include_directories("${CMAKE_CURRENT_LIST_DIR}/src")
 
