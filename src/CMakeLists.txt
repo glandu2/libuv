@@ -115,4 +115,6 @@ else()
   target_link_libraries(${TARGET_NAME} rt)
 endif()
 
-install(TARGETS ${TARGET_NAME} DESTINATION ./)
+if(BUILD_SHARED_LIBS)
+  install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION ./)
+endif()
