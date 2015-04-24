@@ -116,5 +116,7 @@ else()
 endif()
 
 if(BUILD_SHARED_LIBS)
-  install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION ./)
+  install(TARGETS ${TARGET_NAME}
+        RUNTIME DESTINATION ./
+        LIBRARY DESTINATION ./)
 endif()
