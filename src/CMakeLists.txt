@@ -6,16 +6,7 @@ if(BUILD_SHARED_LIBS)
   add_definitions(-DBUILDING_UV_SHARED)
 endif()
 
-if(WIN32)
-  add_definitions(-D_WIN32_WINNT=0x0600)
-  add_definitions(-D_GNU_SOURCE)
-endif()
-
-if(APPLE)
-  add_definitions(-D_DARWIN_USE_64_BIT_INODE=1)
-endif()
-
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if(LIBUV_OS_LINUX)
   add_definitions(-D_POSIX_C_SOURCE=200112)
 endif()
 
@@ -24,20 +15,21 @@ set(SOURCE_FILES
     ../include/uv.h
     ../include/tree.h
     ../include/uv-errno.h
-    ../include/uv-version.h
     ../include/uv-threadpool.h
+    ../include/uv-version.h
     fs-poll.c
+    heap-inl.h
     inet.c
     queue.h
+    threadpool.c
     uv-common.c
     uv-common.h
     version.c
-    heap-inl.h
-    threadpool.c
 )
 
-if(WIN32)
+if(LIBUV_OS_WIN)
   set(SOURCE_FILES ${SOURCE_FILES}
+      ../include/uv-win.h
       win/async.c
       win/atomicops-inl.h
       win/core.c
@@ -52,6 +44,7 @@ if(WIN32)
       win/internal.h
       win/loop-watcher.c
       win/pipe.c
+      win/thread.c
       win/poll.c
       win/process.c
       win/process-stdio.c
@@ -61,9 +54,8 @@ if(WIN32)
       win/stream.c
       win/stream-inl.h
       win/tcp.c
-      win/thread.c
-      win/timer.c
       win/tty.c
+      win/timer.c
       win/udp.c
       win/util.c
       win/winapi.c
@@ -71,8 +63,14 @@ if(WIN32)
       win/winsock.c
       win/winsock.h
   )
+  add_definitions(-D_WIN32_WINNT=0x0600)
 else()
   set(SOURCE_FILES ${SOURCE_FILES}
+      ../include/uv-unix.h
+	  ../include/uv-linux.h
+	  ../include/uv-sunos.h
+	  ../include/uv-darwin.h
+	  ../include/uv-bsd.h
       unix/async.c
       unix/atomic-ops.h
       unix/core.c
@@ -81,16 +79,11 @@ else()
       unix/getaddrinfo.c
       unix/getnameinfo.c
       unix/internal.h
-      unix/linux-core.c
-      unix/linux-inotify.c
-      unix/linux-syscalls.c
-      unix/linux-syscalls.h
       unix/loop.c
       unix/loop-watcher.c
       unix/pipe.c
       unix/poll.c
       unix/process.c
-      unix/proctitle.c
       unix/signal.c
       unix/spinlock.h
       unix/stream.c
@@ -102,17 +95,107 @@ else()
   )
 endif()
 
+if(LIBUV_OS_LINUX OR LIBUV_OS_MAC OR LIBUV_OS_ANDROID)
+  set(SOURCE_FILES ${SOURCE_FILES}
+      unix/proctitle.c
+  )
+endif()
+
+if(LIBUV_OS_MAC)
+  set(SOURCE_FILES ${SOURCE_FILES}
+      unix/darwin.c
+	  unix/fsevents.c
+	  unix/darwin-proctitle.c
+  )
+  add_definitions(-D_DARWIN_USE_64_BIT_INODE=1)
+endif()
+
+if(LIBUV_OS_LINUX)
+  set(SOURCE_FILES ${SOURCE_FILES}
+      unix/linux-core.c
+      unix/linux-inotify.c
+      unix/linux-syscalls.c
+      unix/linux-syscalls.h
+  )
+endif()
+
+if(LIBUV_OS_ANDROID)
+  set(SOURCE_FILES ${SOURCE_FILES}
+      unix/linux-core.c
+      unix/linux-inotify.c
+      unix/linux-syscalls.c
+      unix/linux-syscalls.h
+      unix/pthread-fixes.c
+      unix/android-ifaddrs.c
+  )
+endif()
+
+if(LIBUV_OS_SOLARIS)
+  set(SOURCE_FILES ${SOURCE_FILES}
+      unix/sunos.c
+  )
+  add_definitions(-D__EXTENSIONS__ -D_XOPEN_SOURCE=500)
+endif()
+
+if(LIBUV_OS_AIX)
+  set(SOURCE_FILES ${SOURCE_FILES}
+      unix/aix.c
+  )
+  add_definitions(-D_ALL_SOURCE -D_XOPEN_SOURCE=500)
+endif()
+
+if(LIBUV_OS_FREEBSD)
+  set(SOURCE_FILES ${SOURCE_FILES}
+      unix/freebsd.c
+  )
+endif()
+
+if(LIBUV_OS_OPENBSD)
+  set(SOURCE_FILES ${SOURCE_FILES}
+      unix/openbsd.c
+  )
+endif()
+
+if(LIBUV_OS_NETBSD)
+  set(SOURCE_FILES ${SOURCE_FILES}
+      unix/netbsd.c
+  )
+endif()
+
+if(LIBUV_OS_MAC OR LIBUV_OS_FREEBSD OR LIBUV_OS_OPENBSD OR LIBUV_OS_NETBSD)
+  set(SOURCE_FILES ${SOURCE_FILES}
+      unix/kqueue.c
+  )
+endif()
+
 add_library(${TARGET_NAME} ${SOURCE_FILES})
 
-if(WIN32)
+if(LIBUV_OS_WIN)
   target_link_libraries(${TARGET_NAME} ws2_32.lib)
   target_link_libraries(${TARGET_NAME} iphlpapi.lib)
   target_link_libraries(${TARGET_NAME} psapi.lib)
 else()
-  target_link_libraries(${TARGET_NAME} m)
-  target_link_libraries(${TARGET_NAME} pthread)
+  target_link_libraries(${TARGET_NAME} m ${LIB_PTHREAD_NAME})
+endif()
+
+if(LIBUV_OS_LINUX)
+  target_link_libraries(${TARGET_NAME} dl rt)
+endif()
+
+if(LIBUV_OS_ANDROID)
   target_link_libraries(${TARGET_NAME} dl)
-  target_link_libraries(${TARGET_NAME} rt)
+endif()
+
+if(LIBUV_OS_SOLARIS)
+  target_link_libraries(${TARGET_NAME} kstat nsl sendfile socket)
+endif()
+
+if(LIBUV_OS_AIX)
+  target_link_libraries(${TARGET_NAME} perfstat)
+endif()
+
+if(LIBUV_OS_FREEBSD OR LIBUV_OS_OPENBSD OR LIBUV_OS_NETBSD)
+  target_link_libraries(${TARGET_NAME} kvm)
 endif()
 
 if(BUILD_SHARED_LIBS)

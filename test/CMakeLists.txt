@@ -6,9 +6,8 @@ include(../CMakeLists.txt)
 set(TEST_TARGET_NAME "uv_test")
 set(BENCH_TARGET_NAME "uv_bench")
 
-if(WIN32)
+if(LIBUV_OS_WIN)
   add_definitions(-D_WIN32_WINNT=0x0600)
-  add_definitions(-D_GNU_SOURCE)
 endif()
 
 if(APPLE)
@@ -131,7 +130,7 @@ set(SOURCE_FILES
 	test-udp-multicast-interface6.c
 )
 
-if(WIN32)
+if(LIBUV_OS_WIN)
   set(SOURCE_FILES ${SOURCE_FILES}
 	runner-win.c
 	runner-win.h
@@ -143,6 +142,14 @@ else()
   )
 endif()
 
+if(LIBUV_OS_SOLARIS)
+  add_definitions(-D__EXTENSIONS__ -D_XOPEN_SOURCE=500)
+endif()
+
+if(LIBUV_OS_AIX)
+  add_definitions(-D_ALL_SOURCE -D_XOPEN_SOURCE=500)
+endif()
+
 add_executable(${TEST_TARGET_NAME} ${SOURCE_FILES})
 target_link_libraries(${TEST_TARGET_NAME} uv)
 if(WIN32)
@@ -150,35 +157,35 @@ if(WIN32)
 endif()
 install(TARGETS ${TEST_TARGET_NAME} DESTINATION ./tests/)
 
-
+# Benchmark tests
 set(SOURCE_FILES_BENCH
 	benchmark-async.c
-        benchmark-async-pummel.c
-        benchmark-fs-stat.c
-        benchmark-getaddrinfo.c
-        benchmark-list.h
-        benchmark-loop-count.c
-        benchmark-million-async.c
-        benchmark-million-timers.c
-        benchmark-multi-accept.c
-        benchmark-ping-pongs.c
-        benchmark-pound.c
-        benchmark-pump.c
-        benchmark-sizes.c
-        benchmark-spawn.c
-        benchmark-thread.c
-        benchmark-tcp-write-batch.c
-        benchmark-udp-pummel.c
-        dns-server.c
-        echo-server.c
-        blackhole-server.c
-        run-benchmarks.c
-        runner.c
-        runner.h
-        task.h
+    benchmark-async-pummel.c
+    benchmark-fs-stat.c
+    benchmark-getaddrinfo.c
+    benchmark-list.h
+    benchmark-loop-count.c
+    benchmark-million-async.c
+    benchmark-million-timers.c
+    benchmark-multi-accept.c
+    benchmark-ping-pongs.c
+    benchmark-pound.c
+    benchmark-pump.c
+    benchmark-sizes.c
+    benchmark-spawn.c
+    benchmark-thread.c
+    benchmark-tcp-write-batch.c
+    benchmark-udp-pummel.c
+    dns-server.c
+    echo-server.c
+    blackhole-server.c
+    run-benchmarks.c
+    runner.c
+    runner.h
+    task.h
 )
 
-if(WIN32)
+if(LIBUV_OS_WIN)
   set(SOURCE_FILES_BENCH ${SOURCE_FILES_BENCH}
 	runner-win.c
 	runner-win.h
@@ -192,7 +199,7 @@ endif()
 
 add_executable(${BENCH_TARGET_NAME} ${SOURCE_FILES_BENCH})
 target_link_libraries(${BENCH_TARGET_NAME} uv)
-if(WIN32)
+if(LIBUV_OS_WIN)
 	target_link_libraries(${BENCH_TARGET_NAME} ws2_32)
 endif()
 install(TARGETS ${BENCH_TARGET_NAME} DESTINATION ./tests/)
