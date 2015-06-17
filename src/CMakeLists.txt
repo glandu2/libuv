@@ -6,7 +6,7 @@ if(BUILD_SHARED_LIBS)
   add_definitions(-DBUILDING_UV_SHARED)
 endif()
 
-if(LIBUV_OS_LINUX)
+if(DETECTED_OS_LINUX)
   add_definitions(-D_POSIX_C_SOURCE=200112)
 endif()
 
@@ -27,7 +27,7 @@ set(SOURCE_FILES
     version.c
 )
 
-if(LIBUV_OS_WIN)
+if(DETECTED_OS_WIN)
   set(SOURCE_FILES ${SOURCE_FILES}
       ../include/uv-win.h
       win/async.c
@@ -95,13 +95,13 @@ else()
   )
 endif()
 
-if(LIBUV_OS_LINUX OR LIBUV_OS_MAC OR LIBUV_OS_ANDROID)
+if(DETECTED_OS_LINUX OR DETECTED_OS_MAC OR DETECTED_OS_ANDROID)
   set(SOURCE_FILES ${SOURCE_FILES}
       unix/proctitle.c
   )
 endif()
 
-if(LIBUV_OS_MAC)
+if(DETECTED_OS_MAC)
   set(SOURCE_FILES ${SOURCE_FILES}
       unix/darwin.c
 	  unix/fsevents.c
@@ -110,7 +110,7 @@ if(LIBUV_OS_MAC)
   add_definitions(-D_DARWIN_USE_64_BIT_INODE=1)
 endif()
 
-if(LIBUV_OS_LINUX)
+if(DETECTED_OS_LINUX)
   set(SOURCE_FILES ${SOURCE_FILES}
       unix/linux-core.c
       unix/linux-inotify.c
@@ -119,7 +119,7 @@ if(LIBUV_OS_LINUX)
   )
 endif()
 
-if(LIBUV_OS_ANDROID)
+if(DETECTED_OS_ANDROID)
   set(SOURCE_FILES ${SOURCE_FILES}
       unix/linux-core.c
       unix/linux-inotify.c
@@ -130,39 +130,39 @@ if(LIBUV_OS_ANDROID)
   )
 endif()
 
-if(LIBUV_OS_SOLARIS)
+if(DETECTED_OS_SOLARIS)
   set(SOURCE_FILES ${SOURCE_FILES}
       unix/sunos.c
   )
   add_definitions(-D__EXTENSIONS__ -D_XOPEN_SOURCE=500)
 endif()
 
-if(LIBUV_OS_AIX)
+if(DETECTED_OS_AIX)
   set(SOURCE_FILES ${SOURCE_FILES}
       unix/aix.c
   )
   add_definitions(-D_ALL_SOURCE -D_XOPEN_SOURCE=500)
 endif()
 
-if(LIBUV_OS_FREEBSD)
+if(DETECTED_OS_FREEBSD)
   set(SOURCE_FILES ${SOURCE_FILES}
       unix/freebsd.c
   )
 endif()
 
-if(LIBUV_OS_OPENBSD)
+if(DETECTED_OS_OPENBSD)
   set(SOURCE_FILES ${SOURCE_FILES}
       unix/openbsd.c
   )
 endif()
 
-if(LIBUV_OS_NETBSD)
+if(DETECTED_OS_NETBSD)
   set(SOURCE_FILES ${SOURCE_FILES}
       unix/netbsd.c
   )
 endif()
 
-if(LIBUV_OS_MAC OR LIBUV_OS_FREEBSD OR LIBUV_OS_OPENBSD OR LIBUV_OS_NETBSD)
+if(DETECTED_OS_MAC OR DETECTED_OS_FREEBSD OR DETECTED_OS_OPENBSD OR DETECTED_OS_NETBSD)
   set(SOURCE_FILES ${SOURCE_FILES}
       unix/kqueue.c
   )
@@ -170,7 +170,7 @@ endif()
 
 add_library(${TARGET_NAME} ${SOURCE_FILES})
 
-if(LIBUV_OS_WIN)
+if(DETECTED_OS_WIN)
   target_link_libraries(${TARGET_NAME} ws2_32.lib)
   target_link_libraries(${TARGET_NAME} iphlpapi.lib)
   target_link_libraries(${TARGET_NAME} psapi.lib)
@@ -178,23 +178,23 @@ else()
   target_link_libraries(${TARGET_NAME} m ${LIB_PTHREAD_NAME})
 endif()
 
-if(LIBUV_OS_LINUX)
+if(DETECTED_OS_LINUX)
   target_link_libraries(${TARGET_NAME} dl rt)
 endif()
 
-if(LIBUV_OS_ANDROID)
+if(DETECTED_OS_ANDROID)
   target_link_libraries(${TARGET_NAME} dl)
 endif()
 
-if(LIBUV_OS_SOLARIS)
+if(DETECTED_OS_SOLARIS)
   target_link_libraries(${TARGET_NAME} kstat nsl sendfile socket)
 endif()
 
-if(LIBUV_OS_AIX)
+if(DETECTED_OS_AIX)
   target_link_libraries(${TARGET_NAME} perfstat)
 endif()
 
-if(LIBUV_OS_FREEBSD OR LIBUV_OS_OPENBSD OR LIBUV_OS_NETBSD)
+if(DETECTED_OS_FREEBSD OR DETECTED_OS_OPENBSD OR DETECTED_OS_NETBSD)
   target_link_libraries(${TARGET_NAME} kvm)
 endif()
 
