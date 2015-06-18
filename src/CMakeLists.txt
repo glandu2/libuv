@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
 
-add_definitions(-DHAVE_CONFIG_H)
-
 if(BUILD_SHARED_LIBS)
   add_definitions(-DBUILDING_UV_SHARED)
 endif()
@@ -71,6 +69,7 @@ else()
 	  ../include/uv-sunos.h
 	  ../include/uv-darwin.h
 	  ../include/uv-bsd.h
+      ../include/uv-aix.h
       unix/async.c
       unix/atomic-ops.h
       unix/core.c
@@ -108,6 +107,7 @@ if(DETECTED_OS_MAC)
 	  unix/darwin-proctitle.c
   )
   add_definitions(-D_DARWIN_USE_64_BIT_INODE=1)
+  add_definitions(-D_DARWIN_UNLIMITED_SELECT=1)
 endif()
 
 if(DETECTED_OS_LINUX)
@@ -141,7 +141,7 @@ if(DETECTED_OS_AIX)
   set(SOURCE_FILES ${SOURCE_FILES}
       unix/aix.c
   )
-  add_definitions(-D_ALL_SOURCE -D_XOPEN_SOURCE=500)
+  add_definitions(-D_ALL_SOURCE -D_XOPEN_SOURCE=500 -D_LINUX_SOURCE_COMPAT)
 endif()
 
 if(DETECTED_OS_FREEBSD)
@@ -171,9 +171,10 @@ endif()
 add_library(${TARGET_NAME} ${SOURCE_FILES})
 
 if(DETECTED_OS_WIN)
-  target_link_libraries(${TARGET_NAME} ws2_32.lib)
   target_link_libraries(${TARGET_NAME} iphlpapi.lib)
   target_link_libraries(${TARGET_NAME} psapi.lib)
+  target_link_libraries(${TARGET_NAME} userenv.lib)
+  target_link_libraries(${TARGET_NAME} ws2_32.lib)
 else()
   target_link_libraries(${TARGET_NAME} m ${LIB_PTHREAD_NAME})
 endif()
