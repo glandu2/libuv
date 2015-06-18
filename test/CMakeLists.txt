@@ -1,20 +1,16 @@
 cmake_minimum_required(VERSION 2.8)
-project(uv)
+project(uv-test)
 
 include(../CMakeLists.txt)
 
 set(TEST_TARGET_NAME "uv_test")
 set(BENCH_TARGET_NAME "uv_bench")
 
-if(LIBUV_OS_WIN)
-  add_definitions(-D_WIN32_WINNT=0x0600)
-endif()
-
-if(APPLE)
+if(DETECTED_OS_MAC)
   add_definitions(-D_DARWIN_USE_64_BIT_INODE=1)
 endif()
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if(DETECTED_OS_LINUX)
   add_definitions(-D_POSIX_C_SOURCE=200112)
 endif()
 
@@ -36,6 +32,7 @@ set(SOURCE_FILES
 	test-close-order.c
 	test-connection-fail.c
 	test-cwd-and-chdir.c
+	test-default-loop-close.c
 	test-delayed-accept.c
 	test-error.c
 	test-embed.c
@@ -48,6 +45,8 @@ set(SOURCE_FILES
 	test-getaddrinfo.c
 	test-getnameinfo.c
 	test-getsockname.c
+	test-handle-fileno.c
+	test-homedir.c
 	test-hrtime.c
 	test-idle.c
 	test-ip6-addr.c
@@ -59,6 +58,7 @@ set(SOURCE_FILES
 	test-loop-close.c
 	test-loop-stop.c
 	test-loop-time.c
+	test-loop-configure.c
 	test-walk-handles.c
 	test-watcher-cross-stop.c
 	test-multiple-listen.c
@@ -67,12 +67,16 @@ set(SOURCE_FILES
 	test-ping-pong.c
 	test-pipe-bind-error.c
 	test-pipe-connect-error.c
+	test-pipe-connect-prepare.c
 	test-pipe-getsockname.c
 	test-pipe-sendmsg.c
 	test-pipe-server-close.c
+	test-pipe-close-stdout-read-stdin.c
+	test-pipe-set-non-blocking.c
 	test-platform-output.c
 	test-poll.c
 	test-poll-close.c
+	test-poll-close-doesnt-corrupt-stack.c
 	test-poll-closesocket.c
 	test-process-title.c
 	test-ref.c
@@ -84,6 +88,7 @@ set(SOURCE_FILES
 	test-shutdown-twice.c
 	test-signal.c
 	test-signal-multiple-loops.c
+	test-socket-buffer-size.c
 	test-spawn.c
 	test-fs-poll.c
 	test-stdio-over-pipes.c
@@ -100,12 +105,17 @@ set(SOURCE_FILES
 	test-tcp-connect6-error.c
 	test-tcp-open.c
 	test-tcp-write-to-half-open-connection.c
+	test-tcp-write-after-connect.c
 	test-tcp-writealot.c
+	test-tcp-write-fail.c
 	test-tcp-try-write.c
 	test-tcp-unexpected-read.c
+	test-tcp-oob.c
 	test-tcp-read-stop.c
+	test-tcp-write-queue-order.c
 	test-threadpool.c
 	test-threadpool-cancel.c
+	test-thread-equal.c
 	test-mutexes.c
 	test-thread.c
 	test-barrier.c
@@ -120,6 +130,8 @@ set(SOURCE_FILES
 	test-udp-open.c
 	test-udp-options.c
 	test-udp-send-and-recv.c
+	test-udp-send-immediate.c
+	test-udp-send-unreachable.c
 	test-udp-multicast-join.c
 	test-udp-multicast-join6.c
 	test-dlerror.c
@@ -128,13 +140,15 @@ set(SOURCE_FILES
 	test-ip6-addr.c
 	test-udp-multicast-interface.c
 	test-udp-multicast-interface6.c
+	test-udp-try-send.c
 )
 
-if(LIBUV_OS_WIN)
+if(DETECTED_OS_WIN)
   set(SOURCE_FILES ${SOURCE_FILES}
 	runner-win.c
 	runner-win.h
   )
+  add_definitions(-D_WIN32_WINNT=0x0600)
 else()
   set(SOURCE_FILES ${SOURCE_FILES}
 	runner-unix.c
@@ -142,24 +156,24 @@ else()
   )
 endif()
 
-if(LIBUV_OS_SOLARIS)
+if(DETECTED_OS_SOLARIS)
   add_definitions(-D__EXTENSIONS__ -D_XOPEN_SOURCE=500)
 endif()
 
-if(LIBUV_OS_AIX)
+if(DETECTED_OS_AIX)
   add_definitions(-D_ALL_SOURCE -D_XOPEN_SOURCE=500)
 endif()
 
 add_executable(${TEST_TARGET_NAME} ${SOURCE_FILES})
 target_link_libraries(${TEST_TARGET_NAME} uv)
-if(WIN32)
-	target_link_libraries(${BENCH_TARGET_NAME} ws2_32)
+if(DETECTED_OS_WIN)
+  target_link_libraries(${BENCH_TARGET_NAME} ws2_32)
 endif()
 install(TARGETS ${TEST_TARGET_NAME} DESTINATION ./tests/)
 
 # Benchmark tests
 set(SOURCE_FILES_BENCH
-	benchmark-async.c
+    benchmark-async.c
     benchmark-async-pummel.c
     benchmark-fs-stat.c
     benchmark-getaddrinfo.c
@@ -185,7 +199,7 @@ set(SOURCE_FILES_BENCH
     task.h
 )
 
-if(LIBUV_OS_WIN)
+if(DETECTED_OS_WIN)
   set(SOURCE_FILES_BENCH ${SOURCE_FILES_BENCH}
 	runner-win.c
 	runner-win.h
@@ -199,7 +213,7 @@ endif()
 
 add_executable(${BENCH_TARGET_NAME} ${SOURCE_FILES_BENCH})
 target_link_libraries(${BENCH_TARGET_NAME} uv)
-if(LIBUV_OS_WIN)
-	target_link_libraries(${BENCH_TARGET_NAME} ws2_32)
+if(DETECTED_OS_WIN)
+  target_link_libraries(${BENCH_TARGET_NAME} ws2_32)
 endif()
 install(TARGETS ${BENCH_TARGET_NAME} DESTINATION ./tests/)
