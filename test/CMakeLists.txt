@@ -169,7 +169,6 @@ target_link_libraries(${TEST_TARGET_NAME} uv)
 if(DETECTED_OS_WIN)
   target_link_libraries(${BENCH_TARGET_NAME} ws2_32)
 endif()
-install(TARGETS ${TEST_TARGET_NAME} DESTINATION ./tests/)
 
 # Benchmark tests
 set(SOURCE_FILES_BENCH
@@ -216,4 +215,3 @@ target_link_libraries(${BENCH_TARGET_NAME} uv)
 if(DETECTED_OS_WIN)
   target_link_libraries(${BENCH_TARGET_NAME} ws2_32)
 endif()
-install(TARGETS ${BENCH_TARGET_NAME} DESTINATION ./tests/)

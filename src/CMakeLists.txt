@@ -202,5 +202,5 @@ endif()
 if(BUILD_SHARED_LIBS)
   install(TARGETS ${TARGET_NAME}
         RUNTIME DESTINATION ./
-        LIBRARY DESTINATION ./)
+        LIBRARY DESTINATION ./ COMPONENT "binaries")
 endif()
