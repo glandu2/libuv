@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(uv-test)
 
-include(../CMakeLists.txt)
 
 set(TEST_TARGET_NAME "uv_test")
 set(BENCH_TARGET_NAME "uv_bench")
@@ -166,9 +165,6 @@ endif()
 
 add_executable(${TEST_TARGET_NAME} ${SOURCE_FILES})
 target_link_libraries(${TEST_TARGET_NAME} uv)
-if(DETECTED_OS_WIN)
-  target_link_libraries(${BENCH_TARGET_NAME} ws2_32)
-endif()
 
 # Benchmark tests
 set(SOURCE_FILES_BENCH
@@ -212,6 +208,3 @@ endif()
 
 add_executable(${BENCH_TARGET_NAME} ${SOURCE_FILES_BENCH})
 target_link_libraries(${BENCH_TARGET_NAME} uv)
-if(DETECTED_OS_WIN)
-  target_link_libraries(${BENCH_TARGET_NAME} ws2_32)
-endif()
