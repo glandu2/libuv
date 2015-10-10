@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(uv-test)
 
-
 set(TEST_TARGET_NAME "uv_test")
 set(BENCH_TARGET_NAME "uv_bench")
 
@@ -13,6 +12,13 @@ if(DETECTED_OS_LINUX)
   add_definitions(-D_POSIX_C_SOURCE=200112)
 endif()
 
+if(DETECTED_OS_SOLARIS)
+  add_definitions(-D__EXTENSIONS__ -D_XOPEN_SOURCE=500)
+endif()
+
+if(DETECTED_OS_AIX)
+  add_definitions(-D_ALL_SOURCE -D_XOPEN_SOURCE=500)
+endif()
 
 set(SOURCE_FILES
 	blackhole-server.c
@@ -155,14 +161,6 @@ else()
   )
 endif()
 
-if(DETECTED_OS_SOLARIS)
-  add_definitions(-D__EXTENSIONS__ -D_XOPEN_SOURCE=500)
-endif()
-
-if(DETECTED_OS_AIX)
-  add_definitions(-D_ALL_SOURCE -D_XOPEN_SOURCE=500)
-endif()
-
 add_executable(${TEST_TARGET_NAME} ${SOURCE_FILES})
 target_link_libraries(${TEST_TARGET_NAME} uv)
 
@@ -208,3 +206,5 @@ endif()
 
 add_executable(${BENCH_TARGET_NAME} ${SOURCE_FILES_BENCH})
 target_link_libraries(${BENCH_TARGET_NAME} uv)
+target_compile_definitions(${TARGET_NAME} PRIVATE _GNU_SOURCE)
+

@@ -1,13 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
-
-if(BUILD_SHARED_LIBS)
-  add_definitions(-DBUILDING_UV_SHARED)
-endif()
-
-if(DETECTED_OS_LINUX)
-  add_definitions(-D_POSIX_C_SOURCE=200112)
-endif()
-
+cmake_minimum_required(VERSION 2.8.12)
 
 set(SOURCE_FILES
     ../include/uv.h
@@ -61,7 +52,6 @@ if(DETECTED_OS_WIN)
       win/winsock.c
       win/winsock.h
   )
-  add_definitions(-D_WIN32_WINNT=0x0600)
 else()
   set(SOURCE_FILES ${SOURCE_FILES}
       ../include/uv-unix.h
@@ -106,8 +96,6 @@ if(DETECTED_OS_MAC)
 	  unix/fsevents.c
 	  unix/darwin-proctitle.c
   )
-  add_definitions(-D_DARWIN_USE_64_BIT_INODE=1)
-  add_definitions(-D_DARWIN_UNLIMITED_SELECT=1)
 endif()
 
 if(DETECTED_OS_LINUX)
@@ -134,14 +122,12 @@ if(DETECTED_OS_SOLARIS)
   set(SOURCE_FILES ${SOURCE_FILES}
       unix/sunos.c
   )
-  add_definitions(-D__EXTENSIONS__ -D_XOPEN_SOURCE=500)
 endif()
 
 if(DETECTED_OS_AIX)
   set(SOURCE_FILES ${SOURCE_FILES}
       unix/aix.c
   )
-  add_definitions(-D_ALL_SOURCE -D_XOPEN_SOURCE=500 -D_LINUX_SOURCE_COMPAT)
 endif()
 
 if(DETECTED_OS_FREEBSD)
@@ -169,18 +155,45 @@ if(DETECTED_OS_MAC OR DETECTED_OS_FREEBSD OR DETECTED_OS_OPENBSD OR DETECTED_OS_
 endif()
 
 add_library(${TARGET_NAME} ${SOURCE_FILES})
+target_include_directories(${TARGET_NAME} PUBLIC ../include/)
+target_compile_definitions(${TARGET_NAME} PRIVATE _GNU_SOURCE)
+
+if(BUILD_SHARED_LIBS)
+  target_compile_definitions(${TARGET_NAME}
+    PRIVATE BUILDING_UV_SHARED
+    INTERFACE USING_UV_SHARED
+  )
+endif()
+
+if(NOT DETECTED_OS_WIN)
+  add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64)
+  if(DETECTED_OS_SOLARIS)
+    set(LIB_PTHREAD_NAME "pthread")
+  elseif(NOT DETECTED_OS_SOLARIS AND NOT DETECTED_OS_ANDROID)
+    set(LIB_PTHREAD_NAME "pthread")
+  else()
+    set(LIB_PTHREAD_NAME "")
+  endif()
+endif()
 
 if(DETECTED_OS_WIN)
   target_link_libraries(${TARGET_NAME} iphlpapi.lib)
   target_link_libraries(${TARGET_NAME} psapi.lib)
   target_link_libraries(${TARGET_NAME} userenv.lib)
   target_link_libraries(${TARGET_NAME} ws2_32.lib)
+  target_compile_definitions(${TARGET_NAME} PRIVATE _WIN32_WINNT=0x0600)
 else()
   target_link_libraries(${TARGET_NAME} m ${LIB_PTHREAD_NAME})
 endif()
 
 if(DETECTED_OS_LINUX)
   target_link_libraries(${TARGET_NAME} dl rt)
+  target_compile_definitions(${TARGET_NAME} PRIVATE _POSIX_C_SOURCE=200112)
+endif()
+
+if(DETECTED_OS_MAC)
+  target_compile_definitions(${TARGET_NAME} PRIVATE _DARWIN_USE_64_BIT_INODE=1)
+  target_compile_definitions(${TARGET_NAME} PRIVATE _DARWIN_UNLIMITED_SELECT=1)
 endif()
 
 if(DETECTED_OS_ANDROID)
@@ -189,10 +202,12 @@ endif()
 
 if(DETECTED_OS_SOLARIS)
   target_link_libraries(${TARGET_NAME} kstat nsl sendfile socket)
+  target_compile_definitions(${TARGET_NAME} PRIVATE __EXTENSIONS__ _XOPEN_SOURCE=500)
 endif()
 
 if(DETECTED_OS_AIX)
   target_link_libraries(${TARGET_NAME} perfstat)
+  target_compile_definitions(${TARGET_NAME} PRIVATE _ALL_SOURCE _XOPEN_SOURCE=500 _LINUX_SOURCE_COMPAT)
 endif()
 
 if(DETECTED_OS_FREEBSD OR DETECTED_OS_OPENBSD OR DETECTED_OS_NETBSD)
