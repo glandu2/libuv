@@ -155,7 +155,7 @@ if(DETECTED_OS_MAC OR DETECTED_OS_FREEBSD OR DETECTED_OS_OPENBSD OR DETECTED_OS_
 endif()
 
 add_library(${TARGET_NAME} ${SOURCE_FILES})
-target_include_directories(${TARGET_NAME} PUBLIC ../include/)
+target_include_directories(${TARGET_NAME} PUBLIC "../include/" PRIVATE "./")
 target_compile_definitions(${TARGET_NAME} PRIVATE _GNU_SOURCE)
 
 if(BUILD_SHARED_LIBS)
