@@ -52,6 +52,11 @@ if(DETECTED_OS_WIN)
       win/winsock.c
       win/winsock.h
   )
+  if(MSVC_VERSION < 1900)
+	set(SOURCE_FILES ${SOURCE_FILES}
+		win/snprintf.c
+	)
+  endif()
 else()
   set(SOURCE_FILES ${SOURCE_FILES}
       ../include/uv-unix.h
