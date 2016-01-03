@@ -72,8 +72,10 @@ set(SOURCE_FILES
 	test-ping-pong.c
 	test-pipe-bind-error.c
 	test-pipe-connect-error.c
+	test-pipe-connect-multiple.c
 	test-pipe-connect-prepare.c
 	test-pipe-getsockname.c
+	test-pipe-pending-instances.c
 	test-pipe-sendmsg.c
 	test-pipe-server-close.c
 	test-pipe-close-stdout-read-stdin.c
@@ -84,6 +86,7 @@ set(SOURCE_FILES
 	test-poll-close-doesnt-corrupt-stack.c
 	test-poll-closesocket.c
 	test-process-title.c
+	test-queue-foreach-delete.c
 	test-ref.c
 	test-run-nowait.c
 	test-run-once.c
@@ -102,6 +105,7 @@ set(SOURCE_FILES
 	test-tcp-close.c
 	test-tcp-close-accept.c
 	test-tcp-close-while-connecting.c
+	test-tcp-create-socket-early.c
 	test-tcp-connect-error-after-write.c
 	test-tcp-shutdown-after-write.c
 	test-tcp-flags.c
@@ -130,6 +134,7 @@ set(SOURCE_FILES
 	test-timer.c
 	test-tty.c
 	test-udp-bind.c
+	test-udp-create-socket-early.c
 	test-udp-dgram-too-big.c
 	test-udp-ipv6.c
 	test-udp-open.c
