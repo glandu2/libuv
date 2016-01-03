@@ -85,7 +85,7 @@ static void eof_timer_close_cb(uv_handle_t* handle);
 
 
 static void uv_unique_pipe_name(char* ptr, char* name, size_t size) {
-  _snprintf(name, size, "\\\\?\\pipe\\uv\\%p-%u", ptr, GetCurrentProcessId());
+  snprintf(name, size, "\\\\?\\pipe\\uv\\%p-%u", ptr, GetCurrentProcessId());
 }
 
 
@@ -253,6 +253,10 @@ static int uv_set_pipe_handle(uv_loop_t* loop,
   DWORD mode = PIPE_READMODE_BYTE | PIPE_WAIT;
   DWORD current_mode = 0;
   DWORD err = 0;
+
+  if (!(handle->flags & UV_HANDLE_PIPESERVER) &&
+      handle->handle != INVALID_HANDLE_VALUE)
+    return UV_EBUSY;
 
   if (!SetNamedPipeHandleState(pipeHandle, &mode, NULL, NULL)) {
     err = GetLastError();
@@ -468,6 +472,8 @@ void uv_pipe_endgame(uv_loop_t* loop, uv_pipe_t* handle) {
 
 
 void uv_pipe_pending_instances(uv_pipe_t* handle, int count) {
+  if (handle->flags & UV_HANDLE_BOUND)
+    return;
   handle->pipe.serv.pending_instances = count;
   handle->flags |= UV_HANDLE_PIPESERVER;
 }
@@ -745,6 +751,7 @@ void uv_pipe_cleanup(uv_loop_t* loop, uv_pipe_t* handle) {
         handle->pipe.serv.accept_reqs[i].pipeHandle = INVALID_HANDLE_VALUE;
       }
     }
+    handle->handle = INVALID_HANDLE_VALUE;
   }
 
   if (handle->flags & UV_HANDLE_CONNECTION) {
@@ -1239,6 +1246,10 @@ static int uv_pipe_write_impl(uv_loop_t* loop,
     if (send_handle) {
       tcp_send_handle = (uv_tcp_t*)send_handle;
 
+      if (handle->pipe.conn.ipc_pid == 0) {
+          handle->pipe.conn.ipc_pid = uv_current_pid();
+      }
+
       err = uv_tcp_duplicate_socket(tcp_send_handle, handle->pipe.conn.ipc_pid,
           &ipc_frame.socket_info_ex.socket_info);
       if (err) {
@@ -1622,7 +1633,7 @@ void uv_process_pipe_read_req(uv_loop_t* loop, uv_pipe_t* handle,
 
       if (ReadFile(handle->handle,
                    buf.base,
-                   buf.len,
+                   min(buf.len, avail),
                    &bytes,
                    NULL)) {
         /* Successful read */
