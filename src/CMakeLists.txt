@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 2.8.12)
 
+set(TARGET_NAME "uv")
+
+include(../DetectOS.cmake)
+
 set(SOURCE_FILES
     ../include/uv.h
     ../include/tree.h
@@ -52,7 +56,7 @@ if(DETECTED_OS_WIN)
       win/winsock.c
       win/winsock.h
   )
-  if(MSVC_VERSION < 1900)
+  if(MSVC_VERSION LESS 1900)
 	set(SOURCE_FILES ${SOURCE_FILES}
 		win/snprintf.c
 	)
@@ -171,11 +175,9 @@ endif()
 
 if(NOT DETECTED_OS_WIN)
   if(DETECTED_OS_SOLARIS)
-    set(LIB_PTHREAD_NAME "pthread")
+	target_compile_options(${TARGET_NAME} PUBLIC -pthreads)
   elseif(NOT DETECTED_OS_SOLARIS AND NOT DETECTED_OS_ANDROID)
-    set(LIB_PTHREAD_NAME "pthread")
-  else()
-    set(LIB_PTHREAD_NAME "")
+	target_compile_options(${TARGET_NAME} PUBLIC -pthread)
   endif()
 endif()
 
@@ -187,7 +189,7 @@ if(DETECTED_OS_WIN)
   target_compile_definitions(${TARGET_NAME} PRIVATE _WIN32_WINNT=0x0600)
   target_compile_definitions(${TARGET_NAME} PRIVATE _GNU_SOURCE)
 else()
-  target_link_libraries(${TARGET_NAME} m ${LIB_PTHREAD_NAME})
+  target_link_libraries(${TARGET_NAME} m)
   target_compile_options(${TARGET_NAME} PRIVATE --std=gnu89 -pedantic)
   target_compile_definitions(${TARGET_NAME} PUBLIC _LARGEFILE_SOURCE)
   target_compile_definitions(${TARGET_NAME} PUBLIC _FILE_OFFSET_BITS=64)
