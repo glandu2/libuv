@@ -4,21 +4,7 @@ project(uv-test)
 set(TEST_TARGET_NAME "uv_test")
 set(BENCH_TARGET_NAME "uv_bench")
 
-if(DETECTED_OS_MAC)
-  add_definitions(-D_DARWIN_USE_64_BIT_INODE=1)
-endif()
-
-if(DETECTED_OS_LINUX)
-  add_definitions(-D_POSIX_C_SOURCE=200112)
-endif()
-
-if(DETECTED_OS_SOLARIS)
-  add_definitions(-D__EXTENSIONS__ -D_XOPEN_SOURCE=500)
-endif()
-
-if(DETECTED_OS_AIX)
-  add_definitions(-D_ALL_SOURCE -D_XOPEN_SOURCE=500)
-endif()
+include(../DetectOS.cmake)
 
 set(SOURCE_FILES
 	blackhole-server.c
@@ -154,20 +140,30 @@ set(SOURCE_FILES
 )
 
 if(DETECTED_OS_WIN)
-  set(SOURCE_FILES ${SOURCE_FILES}
+  set(RUNNER_SOURCE_FILES
 	runner-win.c
 	runner-win.h
+	#../src/win/snprintf.c
   )
-  add_definitions(-D_WIN32_WINNT=0x0600)
 else()
-  set(SOURCE_FILES ${SOURCE_FILES}
+  set(RUNNER_SOURCE_FILES
 	runner-unix.c
 	runner-unix.h
   )
 endif()
 
-add_executable(${TEST_TARGET_NAME} ${SOURCE_FILES})
+add_executable(${TEST_TARGET_NAME} ${SOURCE_FILES} ${RUNNER_SOURCE_FILES})
 target_link_libraries(${TEST_TARGET_NAME} uv)
+if(NOT DETECTED_OS_WIN32)
+  target_compile_definitions(${TEST_TARGET_NAME} PRIVATE _GNU_SOURCE)
+endif()
+
+# make test-fs.c compile
+if(DETECTED_OS_SOLARIS)
+  target_compile_definitions(${TEST_TARGET_NAME} PRIVATE __EXTENSIONS__ _XOPEN_SOURCE=500)
+elseif(DETECTED_OS_AIX)
+  target_compile_definitions(${TEST_TARGET_NAME} PRIVATE _ALL_SOURCE _XOPEN_SOURCE=500)
+endif()
 
 # Benchmark tests
 set(SOURCE_FILES_BENCH
@@ -197,19 +193,8 @@ set(SOURCE_FILES_BENCH
     task.h
 )
 
-if(DETECTED_OS_WIN)
-  set(SOURCE_FILES_BENCH ${SOURCE_FILES_BENCH}
-	runner-win.c
-	runner-win.h
-  )
-else()
-  set(SOURCE_FILES_BENCH ${SOURCE_FILES_BENCH}
-	runner-unix.c
-	runner-unix.h
-  )
-endif()
-
-add_executable(${BENCH_TARGET_NAME} ${SOURCE_FILES_BENCH})
+add_executable(${BENCH_TARGET_NAME} ${SOURCE_FILES_BENCH} ${RUNNER_SOURCE_FILES})
 target_link_libraries(${BENCH_TARGET_NAME} uv)
-target_compile_definitions(${TARGET_NAME} PRIVATE _GNU_SOURCE)
-
+if(NOT DETECTED_OS_WIN32)
+  target_compile_definitions(${TEST_TARGET_NAME} PRIVATE _GNU_SOURCE)
+endif()
