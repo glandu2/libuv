@@ -175,9 +175,11 @@ endif()
 
 if(NOT DETECTED_OS_WIN)
   if(DETECTED_OS_SOLARIS)
-	target_compile_options(${TARGET_NAME} PUBLIC -pthreads)
+    target_compile_options(${TARGET_NAME} PUBLIC -pthreads)
+    target_link_libraries(${TARGET_NAME} -pthread)
   elseif(NOT DETECTED_OS_SOLARIS AND NOT DETECTED_OS_ANDROID)
-	target_compile_options(${TARGET_NAME} PUBLIC -pthread)
+    target_compile_options(${TARGET_NAME} PUBLIC -pthread)
+    target_link_libraries(${TARGET_NAME} -pthread)
   endif()
 endif()
 
