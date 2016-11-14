@@ -52,6 +52,7 @@ set(SOURCE_FILES_TEST
   test-fs-event.c
   test-get-currentexe.c
   test-get-memory.c
+  test-get-passwd.c
   test-getaddrinfo.c
   test-getnameinfo.c
   test-getsockname.c
@@ -104,6 +105,7 @@ set(SOURCE_FILES_TEST
   test-spawn.c
   test-fs-poll.c
   test-stdio-over-pipes.c
+  test-tcp-alloc-cb-fail.c
   test-tcp-bind-error.c
   test-tcp-bind6-error.c
   test-tcp-close.c
@@ -129,6 +131,7 @@ set(SOURCE_FILES_TEST
   test-threadpool.c
   test-threadpool-cancel.c
   test-thread-equal.c
+  test-tmpdir.c
   test-mutexes.c
   test-thread.c
   test-barrier.c
@@ -137,6 +140,7 @@ set(SOURCE_FILES_TEST
   test-timer-from-check.c
   test-timer.c
   test-tty.c
+  test-udp-alloc-cb-fail.c
   test-udp-bind.c
   test-udp-create-socket-early.c
   test-udp-dgram-too-big.c
