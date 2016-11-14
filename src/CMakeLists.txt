@@ -26,6 +26,7 @@ if(DETECTED_OS_WIN)
       win/async.c
       win/atomicops-inl.h
       win/core.c
+      win/detect-wakeup.c
       win/dl.c
       win/error.c
       win/fs.c
@@ -44,6 +45,7 @@ if(DETECTED_OS_WIN)
       win/req.c
       win/req-inl.h
       win/signal.c
+      win/snprintf.c
       win/stream.c
       win/stream-inl.h
       win/tcp.c
@@ -56,11 +58,6 @@ if(DETECTED_OS_WIN)
       win/winsock.c
       win/winsock.h
   )
-  if(MSVC_VERSION LESS 1900)
-	set(SOURCE_FILES ${SOURCE_FILES}
-		win/snprintf.c
-	)
-  endif()
 else()
   set(SOURCE_FILES ${SOURCE_FILES}
       ../include/uv-unix.h
@@ -104,6 +101,7 @@ if(DETECTED_OS_MAC)
       unix/darwin.c
 	  unix/fsevents.c
 	  unix/darwin-proctitle.c
+	  unix/pthread-barrier.c
   )
 endif()
 
@@ -124,6 +122,7 @@ if(DETECTED_OS_ANDROID)
       unix/linux-syscalls.h
       unix/pthread-fixes.c
       unix/android-ifaddrs.c
+      unix/pthread-barrier.c
   )
 endif()
 
@@ -163,6 +162,14 @@ if(DETECTED_OS_MAC OR DETECTED_OS_FREEBSD OR DETECTED_OS_OPENBSD OR DETECTED_OS_
   )
 endif()
 
+if(DETECTED_OS_ZOS)
+	set(SOURCE_FILES ${SOURCE_FILES}
+		unix/pthread-fixes.c
+		unix/pthread-barrier.c
+		unix/os390.c
+	)
+endif()
+
 add_library(${TARGET_NAME} ${SOURCE_FILES})
 target_include_directories(${TARGET_NAME} PUBLIC "../include/" PRIVATE "./")
 
@@ -177,22 +184,45 @@ if(NOT DETECTED_OS_WIN)
   if(DETECTED_OS_SOLARIS)
     target_compile_options(${TARGET_NAME} PUBLIC -pthreads)
     target_link_libraries(${TARGET_NAME} -pthread)
-  elseif(NOT DETECTED_OS_SOLARIS AND NOT DETECTED_OS_ANDROID)
+  elseif(NOT DETECTED_OS_SOLARIS AND NOT DETECTED_OS_ANDROID AND NOT DETECTED_OS_ZOS)
     target_compile_options(${TARGET_NAME} PUBLIC -pthread)
     target_link_libraries(${TARGET_NAME} -pthread)
   endif()
 endif()
 
+if(DETECTED_OS_ZOS)
+  target_compile_options(${TARGET_NAME} PUBLIC -qxplink)
+  if(BUILD_SHARED_LIBS)
+	target_compile_options(${TARGET_NAME} PRIVATE -qexportall)
+	target_link_libraries(${TARGET_NAME} -Wl,DLL)
+  endif()
+  target_compile_definitions(${TARGET_NAME} PRIVATE _UNIX03_THREADS)
+  target_compile_definitions(${TARGET_NAME} PRIVATE _UNIX03_SOURCE)
+  target_compile_definitions(${TARGET_NAME} PRIVATE _OPEN_SYS_IF_EXT)
+  target_compile_definitions(${TARGET_NAME} PRIVATE _OPEN_SYS_SOCK_IPV6)
+  target_compile_definitions(${TARGET_NAME} PRIVATE _OPEN_MSGQ_EXT)
+  target_compile_definitions(${TARGET_NAME} PRIVATE _XOPEN_SOURCE_EXTENDED)
+  target_compile_definitions(${TARGET_NAME} PRIVATE _ALL_SOURCE)
+  target_compile_definitions(${TARGET_NAME} PRIVATE _LARGE_TIME_API)
+  target_compile_definitions(${TARGET_NAME} PRIVATE _OPEN_SYS_FILE_EXT)
+  target_compile_definitions(${TARGET_NAME} PRIVATE _AE_BIMODAL)
+  target_compile_definitions(${TARGET_NAME} PRIVATE PATH_MAX=255)
+endif()
+
 if(DETECTED_OS_WIN)
   target_link_libraries(${TARGET_NAME} iphlpapi.lib)
   target_link_libraries(${TARGET_NAME} psapi.lib)
+  target_link_libraries(${TARGET_NAME} shell32.lib)
+  target_link_libraries(${TARGET_NAME} user32.lib)
   target_link_libraries(${TARGET_NAME} userenv.lib)
   target_link_libraries(${TARGET_NAME} ws2_32.lib)
   target_compile_definitions(${TARGET_NAME} PRIVATE _WIN32_WINNT=0x0600)
   target_compile_definitions(${TARGET_NAME} PRIVATE _GNU_SOURCE)
 else()
   target_link_libraries(${TARGET_NAME} m)
-  target_compile_options(${TARGET_NAME} PRIVATE --std=gnu89 -pedantic)
+  if(NOT DETECTED_OS_ZOS)
+	target_compile_options(${TARGET_NAME} PRIVATE --std=gnu89 -pedantic -fvisibility=hidden)
+  endif()
   target_compile_definitions(${TARGET_NAME} PUBLIC _LARGEFILE_SOURCE)
   target_compile_definitions(${TARGET_NAME} PUBLIC _FILE_OFFSET_BITS=64)
 endif()
@@ -219,7 +249,7 @@ endif()
 
 if(DETECTED_OS_AIX)
   target_link_libraries(${TARGET_NAME} perfstat)
-  target_compile_definitions(${TARGET_NAME} PRIVATE _ALL_SOURCE _XOPEN_SOURCE=500 _LINUX_SOURCE_COMPAT)
+  target_compile_definitions(${TARGET_NAME} PRIVATE _ALL_SOURCE _XOPEN_SOURCE=500 _LINUX_SOURCE_COMPAT _THREAD_SAFE)
 endif()
 
 if(DETECTED_OS_FREEBSD OR DETECTED_OS_OPENBSD OR DETECTED_OS_NETBSD)
