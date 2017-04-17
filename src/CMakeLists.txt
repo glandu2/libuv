@@ -90,7 +90,7 @@ else()
 		)
 endif()
 
-if(DETECTED_OS_LINUX OR DETECTED_OS_MAC OR DETECTED_OS_ANDROID)
+if(DETECTED_OS_LINUX OR DETECTED_OS_MAC OR DETECTED_OS_ANDROID OR DETECTED_OS_ZOS)
 	set(SOURCE_FILES ${SOURCE_FILES}
 		unix/proctitle.c
 		)
@@ -156,8 +156,15 @@ if(DETECTED_OS_NETBSD)
 		)
 endif()
 
+if(DETECTED_OS_FREEBSD OR DETECTED_OS_OPENBSD OR DETECTED_OS_NETBSD)
+	set(SOURCE_FILES ${SOURCE_FILES}
+		unix/posix-hrtime.c
+		)
+endif()
+
 if(DETECTED_OS_MAC OR DETECTED_OS_FREEBSD OR DETECTED_OS_OPENBSD OR DETECTED_OS_NETBSD)
 	set(SOURCE_FILES ${SOURCE_FILES}
+		unix/bsd-ifaddrs.c
 		unix/kqueue.c
 		)
 endif()
@@ -167,6 +174,7 @@ if(DETECTED_OS_ZOS)
 		unix/pthread-fixes.c
 		unix/pthread-barrier.c
 		unix/os390.c
+		unix/os390-syscalls.c
 		)
 endif()
 
@@ -192,12 +200,14 @@ endif()
 
 if(DETECTED_OS_ZOS)
 	target_compile_options(${TARGET_NAME} PUBLIC -qxplink)
+	target_link_libraries(${TARGET_NAME} -qxplink)
 	if(BUILD_SHARED_LIBS)
 		target_compile_options(${TARGET_NAME} PRIVATE -qexportall)
 		target_link_libraries(${TARGET_NAME} -Wl,DLL)
 	endif()
 	target_compile_definitions(${TARGET_NAME} PRIVATE _UNIX03_THREADS)
 	target_compile_definitions(${TARGET_NAME} PRIVATE _UNIX03_SOURCE)
+	target_compile_definitions(${TARGET_NAME} PRIVATE _UNIX03_WITHDRAWN)
 	target_compile_definitions(${TARGET_NAME} PRIVATE _OPEN_SYS_IF_EXT)
 	target_compile_definitions(${TARGET_NAME} PRIVATE _OPEN_SYS_SOCK_IPV6)
 	target_compile_definitions(${TARGET_NAME} PRIVATE _OPEN_MSGQ_EXT)
@@ -249,7 +259,11 @@ endif()
 
 if(DETECTED_OS_AIX)
 	target_link_libraries(${TARGET_NAME} perfstat)
-	target_compile_definitions(${TARGET_NAME} PRIVATE _ALL_SOURCE _XOPEN_SOURCE=500 _LINUX_SOURCE_COMPAT _THREAD_SAFE)
+	target_compile_definitions(${TARGET_NAME} PRIVATE _ALL_SOURCE)
+	target_compile_definitions(${TARGET_NAME} PRIVATE _XOPEN_SOURCE=500)
+	target_compile_definitions(${TARGET_NAME} PRIVATE _LINUX_SOURCE_COMPAT)
+	target_compile_definitions(${TARGET_NAME} PRIVATE _THREAD_SAFE)
+	target_compile_definitions(${TARGET_NAME} PRIVATE HAVE_SYS_AHAFS_EVPRODS_H)
 endif()
 
 if(DETECTED_OS_FREEBSD OR DETECTED_OS_OPENBSD OR DETECTED_OS_NETBSD)
