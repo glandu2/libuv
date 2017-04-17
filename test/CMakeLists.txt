@@ -47,7 +47,9 @@ set(SOURCE_FILES_TEST
   test-error.c
   test-embed.c
   test-emfile.c
+  test-env-vars.c
   test-fail-always.c
+  test-fork.c
   test-fs.c
   test-fs-event.c
   test-get-currentexe.c
