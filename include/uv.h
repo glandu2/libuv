@@ -140,6 +140,8 @@ extern "C" {
   XX(ENXIO, "no such device or address")                                      \
   XX(EMLINK, "too many links")                                                \
   XX(EHOSTDOWN, "host is down")                                               \
+  XX(EREMOTEIO, "remote I/O error")                                           \
+  XX(ENOTTY, "inappropriate ioctl for device")                                \
 
 #define UV_HANDLE_TYPE_MAP(XX)                                                \
   XX(ASYNC, async)                                                            \
@@ -719,7 +721,8 @@ struct uv_poll_s {
 enum uv_poll_event {
   UV_READABLE = 1,
   UV_WRITABLE = 2,
-  UV_DISCONNECT = 4
+  UV_DISCONNECT = 4,
+  UV_PRIORITIZED = 8
 };
 
 UV_EXTERN int uv_poll_init(uv_loop_t* loop, uv_poll_t* handle, int fd);
@@ -1034,6 +1037,7 @@ UV_EXTERN int uv_get_process_title(char* buffer, size_t size);
 UV_EXTERN int uv_set_process_title(const char* title);
 UV_EXTERN int uv_resident_set_memory(size_t* rss);
 UV_EXTERN int uv_uptime(double* uptime);
+UV_EXTERN uv_os_fd_t uv_get_osfhandle(int fd);
 
 typedef struct {
   long tv_sec;
@@ -1078,6 +1082,8 @@ UV_EXTERN int uv_os_getenv(const char* name, char* buffer, size_t* size);
 UV_EXTERN int uv_os_setenv(const char* name, const char* value);
 UV_EXTERN int uv_os_unsetenv(const char* name);
 
+UV_EXTERN int uv_os_gethostname(char* buffer, size_t* size);
+
 
 typedef enum {
   UV_FS_UNKNOWN = -1,
@@ -1109,7 +1115,8 @@ typedef enum {
   UV_FS_READLINK,
   UV_FS_CHOWN,
   UV_FS_FCHOWN,
-  UV_FS_REALPATH
+  UV_FS_REALPATH,
+  UV_FS_COPYFILE
 } uv_fs_type;
 
 /* uv_fs_t is a subclass of uv_req_t. */
@@ -1154,6 +1161,18 @@ UV_EXTERN int uv_fs_write(uv_loop_t* loop,
                           unsigned int nbufs,
                           int64_t offset,
                           uv_fs_cb cb);
+/*
+ * This flag can be used with uv_fs_copyfile() to return an error if the
+ * destination already exists.
+ */
+#define UV_FS_COPYFILE_EXCL   0x0001
+
+UV_EXTERN int uv_fs_copyfile(uv_loop_t* loop,
+                             uv_fs_t* req,
+                             const char* path,
+                             const char* new_path,
+                             int flags,
+                             uv_fs_cb cb);
 UV_EXTERN int uv_fs_mkdir(uv_loop_t* loop,
                           uv_fs_t* req,
                           const char* path,
@@ -1406,6 +1425,7 @@ UV_EXTERN int uv_dlsym(uv_lib_t* lib, const char* name, void** ptr);
 UV_EXTERN const char* uv_dlerror(const uv_lib_t* lib);
 
 UV_EXTERN int uv_mutex_init(uv_mutex_t* handle);
+UV_EXTERN int uv_mutex_init_recursive(uv_mutex_t* handle);
 UV_EXTERN void uv_mutex_destroy(uv_mutex_t* handle);
 UV_EXTERN void uv_mutex_lock(uv_mutex_t* handle);
 UV_EXTERN int uv_mutex_trylock(uv_mutex_t* handle);

@@ -545,25 +545,6 @@ void uv__fs_event_close(uv_fs_event_t* handle) {
 #endif /* defined(PORT_SOURCE_FILE) */
 
 
-char** uv_setup_args(int argc, char** argv) {
-  return argv;
-}
-
-
-int uv_set_process_title(const char* title) {
-  return 0;
-}
-
-
-int uv_get_process_title(char* buffer, size_t size) {
-  if (buffer == NULL || size == 0)
-    return -EINVAL;
-
-  buffer[0] = '\0';
-  return 0;
-}
-
-
 int uv_resident_set_memory(size_t* rss) {
   psinfo_t psinfo;
   int err;
@@ -766,7 +747,8 @@ static int uv__ifaddr_exclude(struct ifaddrs *ent) {
     return 1;
   if (ent->ifa_addr == NULL)
     return 1;
-  if (ent->ifa_addr->sa_family == PF_PACKET)
+  if (ent->ifa_addr->sa_family != AF_INET &&
+      ent->ifa_addr->sa_family != AF_INET6)
     return 1;
   return 0;
 }
@@ -775,7 +757,6 @@ int uv_interface_addresses(uv_interface_address_t** addresses, int* count) {
   uv_interface_address_t* address;
   struct ifaddrs* addrs;
   struct ifaddrs* ent;
-  int i;
 
   if (getifaddrs(&addrs))
     return -errno;

@@ -388,7 +388,7 @@ void uv__io_poll(uv_loop_t* loop, int timeout) {
        * free when we switch over to edge-triggered I/O.
        */
       if (pe->events == POLLERR || pe->events == POLLHUP)
-        pe->events |= w->pevents & (POLLIN | POLLOUT);
+        pe->events |= w->pevents & (POLLIN | POLLOUT | UV__POLLPRI);
 
       if (pe->events != 0) {
         /* Run signal watchers last.  This also affects child process watchers
@@ -469,55 +469,6 @@ uint64_t uv__hrtime(uv_clocktype_t type) {
     return 0;  /* Not really possible. */
 
   return t.tv_sec * (uint64_t) 1e9 + t.tv_nsec;
-}
-
-
-void uv_loadavg(double avg[3]) {
-  struct sysinfo info;
-
-  if (sysinfo(&info) < 0) return;
-
-  avg[0] = (double) info.loads[0] / 65536.0;
-  avg[1] = (double) info.loads[1] / 65536.0;
-  avg[2] = (double) info.loads[2] / 65536.0;
-}
-
-
-int uv_exepath(char* buffer, size_t* size) {
-  ssize_t n;
-
-  if (buffer == NULL || size == NULL || *size == 0)
-    return -EINVAL;
-
-  n = *size - 1;
-  if (n > 0)
-    n = readlink("/proc/self/exe", buffer, n);
-
-  if (n == -1)
-    return -errno;
-
-  buffer[n] = '\0';
-  *size = n;
-
-  return 0;
-}
-
-
-uint64_t uv_get_free_memory(void) {
-  struct sysinfo info;
-
-  if (sysinfo(&info) == 0)
-    return (uint64_t) info.freeram * info.mem_unit;
-  return 0;
-}
-
-
-uint64_t uv_get_total_memory(void) {
-  struct sysinfo info;
-
-  if (sysinfo(&info) == 0)
-    return (uint64_t) info.totalram * info.mem_unit;
-  return 0;
 }
 
 
@@ -886,7 +837,7 @@ void uv_free_cpu_info(uv_cpu_info_t* cpu_infos, int count) {
   uv__free(cpu_infos);
 }
 
-static int uv__ifaddr_exclude(struct ifaddrs *ent) {
+static int uv__ifaddr_exclude(struct ifaddrs *ent, int exclude_type) {
   if (!((ent->ifa_flags & IFF_UP) && (ent->ifa_flags & IFF_RUNNING)))
     return 1;
   if (ent->ifa_addr == NULL)
@@ -896,8 +847,8 @@ static int uv__ifaddr_exclude(struct ifaddrs *ent) {
    * devices. We're not interested in this information yet.
    */
   if (ent->ifa_addr->sa_family == PF_PACKET)
-    return 1;
-  return 0;
+    return exclude_type;
+  return !exclude_type;
 }
 
 int uv_interface_addresses(uv_interface_address_t** addresses,
@@ -918,7 +869,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses,
 
   /* Count the number of interfaces */
   for (ent = addrs; ent != NULL; ent = ent->ifa_next) {
-    if (uv__ifaddr_exclude(ent))
+    if (uv__ifaddr_exclude(ent, UV__EXCLUDE_IFADDR))
       continue;
 
     (*count)++;
@@ -936,7 +887,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses,
   address = *addresses;
 
   for (ent = addrs; ent != NULL; ent = ent->ifa_next) {
-    if (uv__ifaddr_exclude(ent))
+    if (uv__ifaddr_exclude(ent, UV__EXCLUDE_IFADDR))
       continue;
 
     address->name = uv__strdup(ent->ifa_name);
@@ -960,7 +911,7 @@ int uv_interface_addresses(uv_interface_address_t** addresses,
 
   /* Fill in physical addresses for each interface */
   for (ent = addrs; ent != NULL; ent = ent->ifa_next) {
-    if (uv__ifaddr_exclude(ent))
+    if (uv__ifaddr_exclude(ent, UV__EXCLUDE_IFPHYS))
       continue;
 
     address = *addresses;

@@ -59,6 +59,14 @@
 # define UNLEN 256
 #endif
 
+/*
+  Max hostname length. The Windows gethostname() documentation states that 256
+  bytes will always be large enough to hold the null-terminated hostname.
+*/
+#ifndef MAXHOSTNAMELEN
+# define MAXHOSTNAMELEN 256
+#endif
+
 /* Maximum environment variable size, including the terminating null */
 #define MAX_ENV_VAR_LENGTH 32767
 
@@ -77,7 +85,7 @@ static double hrtime_interval_ = 0;
 /*
  * One-time initialization code for functionality defined in util.c.
  */
-void uv__util_init() {
+void uv__util_init(void) {
   LARGE_INTEGER perf_frequency;
 
   /* Initialize process title access mutex. */
@@ -323,7 +331,7 @@ uint64_t uv_get_total_memory(void) {
 }
 
 
-int uv_parent_pid() {
+int uv_parent_pid(void) {
   int parent_pid = -1;
   HANDLE handle;
   PROCESSENTRY32 pe;
@@ -346,7 +354,7 @@ int uv_parent_pid() {
 }
 
 
-int uv_current_pid() {
+int uv_current_pid(void) {
   if (current_pid == 0) {
     current_pid = GetCurrentProcessId();
   }
@@ -408,7 +416,7 @@ done:
 }
 
 
-static int uv__get_process_title() {
+static int uv__get_process_title(void) {
   WCHAR title_w[MAX_TITLE_LENGTH];
 
   if (!GetConsoleTitleW(title_w, sizeof(title_w) / sizeof(WCHAR))) {
@@ -1380,7 +1388,7 @@ int uv__getpwuid_r(uv_passwd_t* pwd) {
   if (OpenProcessToken(GetCurrentProcess(), TOKEN_READ, &token) == 0)
     return uv_translate_sys_error(GetLastError());
 
-  bufsize = sizeof(path);
+  bufsize = ARRAY_SIZE(path);
   if (!GetUserProfileDirectoryW(token, path, &bufsize)) {
     r = GetLastError();
     CloseHandle(token);
@@ -1395,7 +1403,7 @@ int uv__getpwuid_r(uv_passwd_t* pwd) {
   CloseHandle(token);
 
   /* Get the username using GetUserNameW() */
-  bufsize = sizeof(username);
+  bufsize = ARRAY_SIZE(username);
   if (!GetUserNameW(username, &bufsize)) {
     r = GetLastError();
 
@@ -1538,5 +1546,31 @@ int uv_os_unsetenv(const char* name) {
   if (r == 0)
     return uv_translate_sys_error(GetLastError());
 
+  return 0;
+}
+
+
+int uv_os_gethostname(char* buffer, size_t* size) {
+  char buf[MAXHOSTNAMELEN + 1];
+  size_t len;
+
+  if (buffer == NULL || size == NULL || *size == 0)
+    return UV_EINVAL;
+
+  uv__once_init(); /* Initialize winsock */
+
+  if (gethostname(buf, sizeof(buf)) != 0)
+    return uv_translate_sys_error(WSAGetLastError());
+
+  buf[sizeof(buf) - 1] = '\0'; /* Null terminate, just to be safe. */
+  len = strlen(buf);
+
+  if (len >= *size) {
+    *size = len + 1;
+    return UV_ENOBUFS;
+  }
+
+  memcpy(buffer, buf, len + 1);
+  *size = len;
   return 0;
 }

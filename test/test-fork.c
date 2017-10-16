@@ -506,11 +506,17 @@ static int _do_fork_fs_events_child(int file_or_dir) {
 
 
 TEST_IMPL(fork_fs_events_child) {
+#if defined(NO_FS_EVENTS)
+  RETURN_SKIP(NO_FS_EVENTS);
+#endif
   return _do_fork_fs_events_child(FS_TEST_FILE);
 }
 
 
 TEST_IMPL(fork_fs_events_child_dir) {
+#if defined(NO_FS_EVENTS)
+  RETURN_SKIP(NO_FS_EVENTS);
+#endif
 #if defined(__APPLE__) || defined (__linux__)
   return _do_fork_fs_events_child(FS_TEST_DIR);
 #else
@@ -524,6 +530,9 @@ TEST_IMPL(fork_fs_events_child_dir) {
 
 
 TEST_IMPL(fork_fs_events_file_parent_child) {
+#if defined(NO_FS_EVENTS)
+  RETURN_SKIP(NO_FS_EVENTS);
+#endif
 #if defined(__sun) || defined(_AIX)
   /* It's not possible to implement this without additional
    * bookkeeping on SunOS. For AIX it is possible, but has to be

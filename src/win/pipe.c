@@ -960,7 +960,7 @@ static DWORD WINAPI uv_pipe_zero_readfile_thread_proc(void* parameter) {
     uv_mutex_lock(m); /* mutex controls *setting* of readfile_thread */
     if (DuplicateHandle(GetCurrentProcess(), GetCurrentThread(),
                         GetCurrentProcess(), &hThread,
-                        0, TRUE, DUPLICATE_SAME_ACCESS)) {
+                        0, FALSE, DUPLICATE_SAME_ACCESS)) {
       handle->pipe.conn.readfile_thread = hThread;
     } else {
       hThread = NULL;
@@ -968,27 +968,31 @@ static DWORD WINAPI uv_pipe_zero_readfile_thread_proc(void* parameter) {
     uv_mutex_unlock(m);
   }
 restart_readfile:
-  result = ReadFile(handle->handle,
-                    &uv_zero_,
-                    0,
-                    &bytes,
-                    NULL);
-  if (!result) {
-    err = GetLastError();
-    if (err == ERROR_OPERATION_ABORTED &&
-        handle->flags & UV_HANDLE_PIPE_READ_CANCELABLE) {
-      if (handle->flags & UV_HANDLE_READING) {
-        /* just a brief break to do something else */
-        handle->pipe.conn.readfile_thread = NULL;
-        /* resume after it is finished */
-        uv_mutex_lock(m);
-        handle->pipe.conn.readfile_thread = hThread;
-        uv_mutex_unlock(m);
-        goto restart_readfile;
-      } else {
-        result = 1; /* successfully stopped reading */
+  if (handle->flags & UV_HANDLE_READING) {
+    result = ReadFile(handle->handle,
+                      &uv_zero_,
+                      0,
+                      &bytes,
+                      NULL);
+    if (!result) {
+      err = GetLastError();
+      if (err == ERROR_OPERATION_ABORTED &&
+          handle->flags & UV_HANDLE_PIPE_READ_CANCELABLE) {
+        if (handle->flags & UV_HANDLE_READING) {
+          /* just a brief break to do something else */
+          handle->pipe.conn.readfile_thread = NULL;
+          /* resume after it is finished */
+          uv_mutex_lock(m);
+          handle->pipe.conn.readfile_thread = hThread;
+          uv_mutex_unlock(m);
+          goto restart_readfile;
+        } else {
+          result = 1; /* successfully stopped reading */
+        }
       }
     }
+  } else {
+    result = 1; /* successfully aborted read before it even started */
   }
   if (hThread) {
     assert(hThread == handle->pipe.conn.readfile_thread);
@@ -1515,7 +1519,10 @@ static void uv_pipe_read_error(uv_loop_t* loop, uv_pipe_t* handle, int error,
 
 static void uv_pipe_read_error_or_eof(uv_loop_t* loop, uv_pipe_t* handle,
     int error, uv_buf_t buf) {
-  if (error == ERROR_BROKEN_PIPE) {
+  if (error == ERROR_OPERATION_ABORTED) {
+    /* do nothing (equivalent to EINTR) */
+  }
+  else if (error == ERROR_BROKEN_PIPE) {
     uv_pipe_read_eof(loop, handle, buf);
   } else {
     uv_pipe_read_error(loop, handle, error, buf);
@@ -1906,6 +1913,7 @@ int uv_pipe_open(uv_pipe_t* pipe, uv_file file) {
   if (os_handle == INVALID_HANDLE_VALUE)
     return UV_EBADF;
 
+  uv__once_init();
   /* In order to avoid closing a stdio file descriptor 0-2, duplicate the
    * underlying OS handle and forget about the original fd.
    * We could also opt to use the original OS handle and just never close it,
@@ -1979,6 +1987,7 @@ static int uv__pipe_getname(const uv_pipe_t* handle, char* buffer, size_t* size)
   unsigned int name_len;
   int err;
 
+  uv__once_init();
   name_info = NULL;
 
   if (handle->handle == INVALID_HANDLE_VALUE) {

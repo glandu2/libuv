@@ -38,9 +38,8 @@ Public members
 
 .. c:member:: void* uv_loop_t.data
 
-    Space for user-defined arbitrary data. libuv does not use this field. libuv does, however,
-    initialize it to NULL in :c:func:`uv_loop_init`, and it poisons the value (on debug builds)
-    on :c:func:`uv_loop_close`.
+    Space for user-defined arbitrary data. libuv does not use and does not
+    touch this field.
 
 
 API
@@ -191,6 +190,11 @@ API
     function.
 
     This function is not implemented on Windows, where it returns ``UV_ENOSYS``.
+
+    .. caution::
+
+       This function is experimental. It may contain bugs, and is subject to
+       change or removal. API and ABI stability is not guaranteed.
 
     .. note::
 

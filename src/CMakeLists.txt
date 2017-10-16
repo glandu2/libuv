@@ -101,7 +101,6 @@ if(DETECTED_OS_MAC)
 		unix/darwin.c
 		unix/fsevents.c
 		unix/darwin-proctitle.c
-		unix/pthread-barrier.c
 		)
 endif()
 
@@ -111,6 +110,9 @@ if(DETECTED_OS_LINUX)
 		unix/linux-inotify.c
 		unix/linux-syscalls.c
 		unix/linux-syscalls.h
+		unix/procfs-exepath.c
+		unix/sysinfo-loadavg.c
+		unix/sysinfo-memory.c
 		)
 endif()
 
@@ -122,12 +124,15 @@ if(DETECTED_OS_ANDROID)
 		unix/linux-syscalls.h
 		unix/pthread-fixes.c
 		unix/android-ifaddrs.c
-		unix/pthread-barrier.c
+		unix/procfs-exepath.c
+		unix/sysinfo-loadavg.c
+		unix/sysinfo-memory.c
 		)
 endif()
 
 if(DETECTED_OS_SOLARIS)
 	set(SOURCE_FILES ${SOURCE_FILES}
+		unix/no-proctitle.c
 		unix/sunos.c
 		)
 endif()
@@ -172,7 +177,7 @@ endif()
 if(DETECTED_OS_ZOS)
 	set(SOURCE_FILES ${SOURCE_FILES}
 		unix/pthread-fixes.c
-		unix/pthread-barrier.c
+		unix/no-fsevents.c
 		unix/os390.c
 		unix/os390-syscalls.c
 		)
@@ -266,7 +271,7 @@ if(DETECTED_OS_AIX)
 	target_compile_definitions(${TARGET_NAME} PRIVATE HAVE_SYS_AHAFS_EVPRODS_H)
 endif()
 
-if(DETECTED_OS_FREEBSD OR DETECTED_OS_OPENBSD OR DETECTED_OS_NETBSD)
+if(DETECTED_OS_NETBSD)
 	target_link_libraries(${TARGET_NAME} kvm)
 endif()
 

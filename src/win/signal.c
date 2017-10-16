@@ -39,7 +39,7 @@ int uv__signal_start(uv_signal_t* handle,
                      int signum,
                      int oneshot);
 
-void uv_signals_init() {
+void uv_signals_init(void) {
   InitializeCriticalSection(&uv__signal_lock);
   if (!SetConsoleCtrlHandler(uv__signal_control_handler, TRUE))
     abort();
@@ -64,7 +64,7 @@ static int uv__signal_compare(uv_signal_t* w1, uv_signal_t* w2) {
 }
 
 
-RB_GENERATE_STATIC(uv_signal_tree_s, uv_signal_s, tree_entry, uv__signal_compare);
+RB_GENERATE_STATIC(uv_signal_tree_s, uv_signal_s, tree_entry, uv__signal_compare)
 
 
 /*
