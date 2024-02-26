@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.13)
 project(uv)
 
-add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/src" src)
+add_subdirectory(src)
 if(BUILD_TESTS)
-  add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/test" test)
+  add_subdirectory(test)
 endif()

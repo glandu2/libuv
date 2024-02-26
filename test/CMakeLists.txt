@@ -51,11 +51,13 @@ set(SOURCE_FILES_TEST
   test-fail-always.c
   test-fork.c
   test-fs.c
+  test-fs-copyfile.c
   test-fs-event.c
   test-get-currentexe.c
   test-get-memory.c
   test-get-passwd.c
   test-getaddrinfo.c
+  test-gethostname.c
   test-getnameinfo.c
   test-getsockname.c
   test-handle-fileno.c
@@ -92,6 +94,7 @@ set(SOURCE_FILES_TEST
   test-poll-close.c
   test-poll-close-doesnt-corrupt-stack.c
   test-poll-closesocket.c
+  test-poll-oob.c
   test-process-title.c
   test-queue-foreach-delete.c
   test-ref.c
@@ -150,6 +153,7 @@ set(SOURCE_FILES_TEST
   test-udp-open.c
   test-udp-options.c
   test-udp-send-and-recv.c
+  test-udp-send-hang-loop.c
   test-udp-send-immediate.c
   test-udp-send-unreachable.c
   test-udp-multicast-join.c

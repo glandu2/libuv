@@ -212,6 +212,7 @@ int process_copy_output(process_info_t* p, FILE* stream) {
   char buf[1024];
   int fd, r;
   FILE* f;
+  int continue_line = 0;
 
   fd = _open_osfhandle((intptr_t)p->stdio_out, _O_RDONLY | _O_TEXT);
   if (fd == -1)
@@ -227,7 +228,7 @@ int process_copy_output(process_info_t* p, FILE* stream) {
     return -1;
 
   while (fgets(buf, sizeof(buf), f) != NULL)
-    print_lines(buf, strlen(buf), stream);
+    print_lines(buf, strlen(buf), stream, &continue_line);
   
   if (ferror(f))
     return -1;
